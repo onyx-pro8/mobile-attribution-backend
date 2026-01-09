@@ -1,33 +1,33 @@
 const app = require('./app');
+const db = require('./config/mongoose');
 
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || 'localhost';
 
-const server = app.listen(PORT, HOST, () => {
-  console.log(`
-╔════════════════════════════════════════╗
-║  Mobile Attribution Backend Service    ║
-╠════════════════════════════════════════╣
-║  Environment: ${process.env.NODE_ENV || 'development'.padEnd(27)} ║
-║  Server: http://${HOST}:${PORT}${' '.repeat(Math.max(0, 18 - HOST.length - PORT.toString().length))} ║
-║  API Prefix: ${process.env.API_PREFIX || '/api/v1'.padEnd(28)} ║
-╚════════════════════════════════════════╝
-  `);
-});
+const start = async () => {
+  try {
+    // connect to DB if configured
+    await db.connect();
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-    process.exit(0);
-  });
-});
+    const server = app.listen(PORT, HOST, () => {
+      console.log(`Mobile Attribution Backend listening on http://${HOST}:${PORT}`);
+    });
 
-process.on('SIGINT', () => {
-  console.log('SIGINT signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-    process.exit(0);
-  });
-});
+    // Graceful shutdown
+    const shutdown = () => {
+      console.log('Shutdown signal received: closing HTTP server');
+      server.close(() => {
+        console.log('HTTP server closed');
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
+  } catch (err) {
+    console.error('Failed to start server', err);
+    process.exit(1);
+  }
+};
+
+start();

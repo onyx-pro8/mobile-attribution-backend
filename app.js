@@ -7,6 +7,8 @@ const helmet = require('helmet');
 const errorHandler = require('./middleware/errorHandler');
 const attributionRoutes = require('./routes/attribution');
 const healthRoutes = require('./routes/health');
+const linksRoutes = require('./routes/links');
+const linksController = require('./controllers/links');
 
 const app = express();
 
@@ -35,6 +37,11 @@ const apiPrefix = process.env.API_PREFIX || '/api/v1';
 
 app.use(`${apiPrefix}/health`, healthRoutes);
 app.use(`${apiPrefix}/attribution`, attributionRoutes);
+// Short link creation endpoint (POST /links)
+app.use('/links', linksRoutes);
+
+// Redirect endpoint (GET /r/:shortCode)
+app.get('/r/:shortCode', linksController.handleRedirect);
 
 // 404 handler
 app.use((req, res) => {
